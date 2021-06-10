@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.fastSellingDrinks.mapper.CombinationMapper">
+  <resultMap id="BaseResultMap" type="com.nju.fastSellingDrinks.model.Combination">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="primary_price" jdbcType="DOUBLE" property="primaryPrice" />
+    <result column="price" jdbcType="DOUBLE" property="price" />
+    <result column="stock_quantity" jdbcType="INTEGER" property="stockQuantity" />
+    <result column="sale_quantity" jdbcType="INTEGER" property="saleQuantity" />
+    <result column="grade" jdbcType="DOUBLE" property="grade" />
+  </resultMap>
+  <!-- Julin -->
+  <resultMap id="collectionMap" type="com.nju.fastSellingDrinks.model.Combination" extends="BaseResultMap">
+    <!-- 一对多关联-->
+    <collection property="combinationItem" ofType="com.nju.fastSellingDrinks.model.CombinationItem">
+      <id column="cid" jdbcType="INTEGER" property="id" />
+      <result column="combination_id" jdbcType="INTEGER" property="combinationId" />
+      <result column="product_id" jdbcType="INTEGER" property="productId" />
+      <result column="cprice" jdbcType="DOUBLE" property="price" />
+      <result column="num" jdbcType="INTEGER" property="num" />
+      <!-- 一对一关联 -->
+      <association property="productInfo" column="product_id" javaType="com.nju.fastSellingDrinks.model.ProductInfo">
+        <id column="pid" jdbcType="INTEGER" property="id" />
+        <result column="pname" jdbcType="VARCHAR" property="name" />
+        <result column="pprice" jdbcType="DOUBLE" property="price" />
+        <result column="grade" jdbcType="DOUBLE" property="grade" />
+      </association>
+    </collection>
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from combination
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.nju.fastSellingDrinks.model.Combination"
+          useGeneratedKeys="true"
+          keyProperty="id"
+  >
+    insert into combination (id, name, primary_price, 
+      price, stock_quantity, sale_quantity, 
+      grade)
+    values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{primaryPrice,jdbcType=DOUBLE}, 
+      #{price,jdbcType=DOUBLE}, #{stockQuantity,jdbcType=INTEGER}, #{saleQuantity,jdbcType=INTEGER}, 
+      #{grade,jdbcType=DOUBLE})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.nju.fastSellingDrinks.model.Combination">
+    update combination
+    set name = #{name,jdbcType=VARCHAR},
+      primary_price = #{primaryPrice,jdbcType=DOUBLE},
+      price = #{price,jdbcType=DOUBLE},
+      stock_quantity = #{stockQuantity,jdbcType=INTEGER},
+      sale_quantity = #{saleQuantity,jdbcType=INTEGER},
+      grade = #{grade,jdbcType=DOUBLE}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="collectionMap">
+    select c.id, c.name, c.primary_price, c.price, c.stock_quantity, c.sale_quantity, c.grade,
+           ci.id cid,ci.combination_id, ci.product_id,ci.price cprice,ci.num,
+           p.id pid,p.name pname,p.price pprice,p.grade
+    from combination c
+         inner join combination_item ci on c.id=ci.combination_id
+         inner join product_info p on ci.product_id=p.id
+    where c.id = #{id}
+  </select>
+  <select id="select" parameterType="com.nju.fastSellingDrinks.model.Combination" resultMap="collectionMap">
+    select c.id, c.name cname, c.primary_price, c.price, c.stock_quantity, c.sale_quantity, c.grade,
+           ci.id cid,ci.product_id,ci.price,ci.num,
+           p.id pid,p.name pname,p.price,p.grade
+    from combination c
+         inner join combination_item ci on c.id=ci.combination_id
+         inner join product_info p on ci.product_id=p.id
+    where concat(cname, pid, pname,c.id,p.id)
+    like concat('%',#{keyword},'%')
+  </select>
+  <select id="selectConnAll" resultMap="collectionMap">
+    select c.id,c.name,c.primary_price,c.price,c.stock_quantity,c.sale_quantity,c.grade,
+           ci.id cid,ci.combination_id,ci.product_id,ci.price,ci.num,
+           p.id pid,p.name,p.price,p.grade
+    from combination c
+         inner join combination_item ci on c.id=ci.combination_id
+         inner join product_info p on ci.product_id=p.id
+  </select>
+  <select id="rankByGrade" resultMap="collectionMap">
+    select c.id,c.name,c.primary_price,c.price,c.stock_quantity,c.sale_quantity,c.grade,
+           ci.id cid,ci.combination_id,ci.product_id,ci.price,ci.num,
+           p.id pid,p.name,p.price,p.grade
+    from combination c
+         inner join combination_item ci on c.id=ci.combination_id
+         inner join product_info p on ci.product_id=p.id
+    order by c.grade desc limit 5
+  </select>
+  <select id="rankByDiscount" resultMap="collectionMap">
+    select c.id,c.name,c.primary_price,c.price,c.stock_quantity,c.sale_quantity,c.grade,
+           ci.id cid,ci.combination_id,ci.product_id,ci.price,ci.num,
+           p.id pid,p.name,p.price,p.grade
+    from combination c
+         inner join combination_item ci on c.id=ci.combination_id
+         inner join product_info p on ci.product_id=p.id
+    order by (c.primary_price-c.price) desc limit 5
+  </select>
+
+  <select id="rankBySaleQuantity" resultMap="collectionMap">
+    select c.id,c.name,c.primary_price,c.price,c.stock_quantity,c.sale_quantity,c.grade,
+           ci.id cid,ci.combination_id,ci.product_id,ci.price,ci.num,
+           p.id pid,p.name,p.price,p.grade
+    from combination c
+         inner join combination_item ci on c.id=ci.combination_id
+         inner join product_info p on ci.product_id=p.id
+    order by c.sale_quantity desc limit 10
+  </select>
+
+    <select id="selectByProduct" parameterType="java.lang.Integer" resultMap="collectionMap">
+        select c.id,c.name,c.primary_price,c.price,c.stock_quantity,c.sale_quantity,c.grade,
+               ci.id cid,ci.combination_id,ci.product_id,ci.price,ci.num,
+               p.id pid,p.name,p.price,p.grade
+        from combination c
+           inner join combination_item ci on c.id=ci.combination_id
+           inner join product_info p on ci.product_id=p.id
+        where ci.product_id=#{productId}
+    </select>
+</mapper>

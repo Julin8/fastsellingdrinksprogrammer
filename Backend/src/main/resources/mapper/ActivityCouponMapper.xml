@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nju.fastSellingDrinks.mapper.ActivityCouponMapper">
+  <resultMap id="BaseResultMap" type="com.nju.fastSellingDrinks.model.ActivityCoupon">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="activity_id" jdbcType="INTEGER" property="activityId" />
+    <result column="coupon_id" jdbcType="INTEGER" property="couponId" />
+  </resultMap>
+
+  <resultMap id="collectionMap" type="com.nju.fastSellingDrinks.model.ActivityCoupon" extends="BaseResultMap">
+    <association property="couponInfo" column="coupon_id" javaType="com.nju.fastSellingDrinks.model.CouponInfo">
+      <id column="cid" jdbcType="INTEGER" property="id" />
+      <result column="description" jdbcType="VARCHAR" property="description" />
+      <result column="target_amount" jdbcType="DOUBLE" property="targetAmount" />
+      <result column="discount_amount" jdbcType="DOUBLE" property="discountAmount" />
+    </association>
+  </resultMap>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from activity_coupon
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.nju.fastSellingDrinks.model.ActivityCoupon"
+          useGeneratedKeys="true"
+          keyProperty="id"
+  >
+    insert ignore into activity_coupon (id, activity_id, coupon_id
+      )
+    values (#{id,jdbcType=INTEGER}, #{activityId,jdbcType=INTEGER}, #{couponId,jdbcType=INTEGER}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.nju.fastSellingDrinks.model.ActivityCoupon">
+    update activity_coupon
+    set activity_id = #{activityId,jdbcType=INTEGER},
+      coupon_id = #{couponId,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, activity_id, coupon_id
+    from activity_coupon
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, activity_id, coupon_id
+    from activity_coupon
+  </select>
+  <select id="selectByActivity" parameterType="Integer" resultMap="collectionMap">
+    select ac.id, ac.activity_id,
+           c.id cid, c.description, c.target_amount, c.discount_amount
+    from activity_coupon ac
+        inner join coupon_info c on ac.coupon_id = c.id
+    where ac.activity_id=#{activityId}
+  </select>
+</mapper>
